@@ -11,17 +11,18 @@ public:
 	
     virtual bool init();
     virtual bool BoardInit();
+
 	void SetTime(int time) { time_ = time; }
+	void SetStep(int step) { step_ = step; }
 	void SetTargetScore(int score) { target_score_ = score; }
 
-    void createSprite(int row,int col);
+    void createSprite(int row,int col, bool isSnow);
 
     void menuBack(cocos2d::Ref* pSender);
     void menuStop(Ref* pSender);
     void menuContinue(Ref* pSender);
     
 	CREATE_FUNC(Game);
-
 	
 	//the function of each function will be noted in "GameScene.cpp"
 	void update(float t);
@@ -45,10 +46,14 @@ public:
 	void SwapRowAndCol(EmojiSprite* &start_sprite, EmojiSprite* &end_sprite);
 
 	void Timing(float);
+	void DropEndLabel();
 
 	void GameEnd(float);
 
 	EmojiSprite* spriteOfPoint(Point* point);
+
+	int level_step_ = 10;
+	int level_score_ = 100;
 
 private:
 	SpriteBatchNode* spriteSheet;
@@ -65,11 +70,10 @@ private:
 	bool timing_flag;
 
 	int time_;
+	int step_;
 	int score_;
 	int target_score_;
+
 };
 
 #endif 
-
-
-
