@@ -3,12 +3,13 @@
 #include "ctime"
 #include "Const.h"
 
-static const char* EmojiNormal[5] = {
+static const char* EmojiNormal[6] = {
     "BlueNormal.png",
     "GreenNormal.png",
     "PurpleNormal.png",
     "RedNormal.png",
-    "YellowNormal.png"
+    "YellowNormal.png",
+    "Snow.png"
 };
 
 
@@ -55,7 +56,7 @@ EmojiSprite::EmojiSprite():
 {
 }
 
-EmojiSprite* EmojiSprite::create(int row, int col)
+EmojiSprite* EmojiSprite::create(int row, int col, bool isSnow)
 {
     EmojiSprite* emoji = new EmojiSprite();
     emoji->row_ = row;
@@ -63,11 +64,18 @@ EmojiSprite* EmojiSprite::create(int row, int col)
 
     unsigned seed = time(nullptr) * (row+25) * (col+50);
     srand(seed);
-    emoji->img_index_ = rand() % 5;
+    if (!isSnow) {
+        emoji->img_index_ = rand() % 5;
+    }
+    else {
+        emoji->img_index_ = rand() % 6;
+    }
     emoji->initWithSpriteFrameName(EmojiNormal[emoji->img_index_]);
     emoji->autorelease();
     return emoji;
 }
+
+
 
 void EmojiSprite::SetSpriteSpecies(SpriteSpecies species) {
     species_=species;
