@@ -42,14 +42,10 @@
   
   - 基础功能以外的可选功能 
     - [x] 记录最高分
-    - [x] 
-    - [x] 
   - C++新特性
     - [x] 类型推断
     - [x] 基于范围的for循环
   - 其他亮点
-    - [x] PLIST文件的使用
-      - 利用PLIST文件存储英雄默认属性、英雄成长属性和技能成长属性。利用cocos2d-x读取PLIST文件的功能，将数据写入PLIST文件而非代码中，增强了数据的可读性和可修改性
    
 - 代码亮点
 
@@ -59,11 +55,11 @@
 
   ```c++
     #define BOARD_SIZE 8 // the number of sprites at each column/row
-#define SPRITE_SIZE 53 // the size of each sprite
-#define EMOJI_GAP 12 // the gap between two sprites
+  #define SPRITE_SIZE 53 // the size of each sprite
+  #define EMOJI_GAP 12 // the gap between two sprites
 
-#define GAME_SCREEN_WIDTH 600 // the width of screen
-#define GAME_SCREEN_HEIGHT 800 //the height of screen
+  #define GAME_SCREEN_WIDTH 600 // the width of screen
+  #define GAME_SCREEN_HEIGHT 800 //the height of screen
   ```
 
   ```
