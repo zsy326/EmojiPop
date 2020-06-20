@@ -3,7 +3,6 @@
 #include "MainMenuScene.h"
 #include "Const.h"
 
-
 Scene* GameEnd::createScene()
 {
 	auto scene = Scene::create();
@@ -23,7 +22,6 @@ bool GameEnd::init()
 	auto sprite = Sprite::create("GameOver.png");
 	sprite->setPosition(Point(GAME_SCREEN_WIDTH / 2, GAME_SCREEN_HEIGHT / 2));
 	this->addChild(sprite,0);
-
 
 	auto backItem = MenuItemImage::create(
 		"BackNormal.png",
@@ -55,9 +53,14 @@ bool GameEnd::init()
 
 
 	auto labelScore = Label::createWithTTF(config, "  0  ");
-	labelScore->setPosition(Point(GAME_SCREEN_WIDTH / 2, GAME_SCREEN_HEIGHT / 1.2));
+	labelScore->setPosition(Point(GAME_SCREEN_WIDTH / 2, GAME_SCREEN_HEIGHT / 1.05));
 	labelScore->setTag(13);
 	this->addChild(labelScore,2);
+
+	auto labelTime = Label::createWithTTF(config, "  0  ");
+	labelTime->setPosition(Point(GAME_SCREEN_WIDTH / 2, GAME_SCREEN_HEIGHT / 1.2));
+	labelTime->setTag(11);
+	this->addChild(labelTime, 3);
 
 
 	return true;
@@ -81,14 +84,14 @@ void GameEnd::changeToPass() {
 
 void GameEnd::GoToThisLevel(Ref* pSender)
 {
-	auto scene = Game::CreateScene();
-	//set GameLevel
+	auto scene = Scene::create();
+	////set GameLevel
 	auto layer = Game::create();
-	layer->SetTargetScore(10);
-	layer->SetTime(10);
+	layer->SetTargetScore(layer->level_score_);
+	layer->SetStep(layer->level_step_);
 	scene->addChild(layer);
 
-	TransitionScene* reScene = TransitionSplitRows::create(1.0f, scene);
+	TransitionScene* reScene = TransitionSlideInR::create(1.0f, scene);
 	Director::sharedDirector()->replaceScene(reScene);
 }
 
@@ -99,41 +102,42 @@ void GameEnd::GoToMainMenuScene(Ref* pSender)
 	Director::sharedDirector()->replaceScene(reScene);
 }
 
-
 void GameEnd::GoToNextLevel(Ref* pSender)
 {
-	auto scene = Game::CreateScene();
-	//set GameLevel
+
+	auto scene = Scene::create();
+	////set GameLevel
 	auto layer = Game::create();
-	layer->SetTargetScore(1000);
+
+	(layer->level_step_ )*= 2;
+	(layer->level_score_)*= 3;
+
+	layer->SetTargetScore(layer->level_score_);
+	layer->SetStep(layer->level_step_);
 	scene->addChild(layer);
-	layer->SetTime(10);
 
-	TransitionScene* reScene = TransitionSplitRows::create(1.0f, scene);
-	CCDirector::sharedDirector()->replaceScene(reScene);
+	TransitionScene* reScene = TransitionSlideInR::create(1.0f, scene);
+	Director::sharedDirector()->replaceScene(reScene);
+	
 }
-
 
 void GameEnd::ExitGame(Ref* pSender)
 {
 	Director::getInstance()->end();
 }
 
-void GameEnd::setScore(int sc) {
+void GameEnd::setScore(int score) {
 
 	auto labelScore = (Label*)this->getChildByTag(13);
-	labelScore->setString(StringUtils::format(" %d ", sc));
+	labelScore->setString(StringUtils::format("Your score is: %d ", score));
 
-	if (userDefault->getIntegerForKey("Int") < sc) {
 
-		auto newRecord = Sprite::create("Good.png");
-		newRecord->setPosition(Point(GAME_SCREEN_WIDTH / 3.05, GAME_SCREEN_HEIGHT / 1.22));
-		newRecord->setScale(10.0f);// start size
-		newRecord->runAction(ScaleTo::create(1.2f, 1.0));
+	if (userDefault->getIntegerForKey("HScore") < score) {
 
-		this->addChild(newRecord);
+		userDefault->setIntegerForKey("HScore", score);
+	}
 
-		//	// ÒôÐ§
+		//	// éŸ³æ•ˆ
 		//	if (UserDefault::getInstance()->getBoolForKey(SOUND_KEY)) {
 		//		SimpleAudioEngine::getInstance()->playEffect("music_win.wav", false);
 		//	}
@@ -141,10 +145,20 @@ void GameEnd::setScore(int sc) {
 		//}
 		//else
 		//{
-		//	// ÒôÀÖ
+		//	// éŸ³ä¹
 		//	if (UserDefault::getInstance()->getBoolForKey(SOUND_KEY)) {
 		//		SimpleAudioEngine::getInstance()->playEffect("music_fail.mp3", false);
 		//	}
 		//}
+}
+
+void GameEnd::setTime(int time){
+
+	auto labelTime = (Label*)this->getChildByTag(11);
+	labelTime->setString(StringUtils::format("The time you used is: %d ", time));
+
+	if (userDefault->getIntegerForKey("STime") > time) {
+
+		userDefault->setIntegerForKey("STime", time);
 	}
 }
