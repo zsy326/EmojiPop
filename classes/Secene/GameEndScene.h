@@ -14,6 +14,7 @@ public:
 	virtual bool init();
 
 	void setScore(int);
+	void setTime(int);
 	void changeToPass();
 
 	void ExitGame(Ref* pSender);
