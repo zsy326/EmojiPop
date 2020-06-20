@@ -12,6 +12,7 @@ public:
     virtual bool init();
     virtual bool BoardInit();
 
+	void SetScore(int score) { score_ = score; }
 	void SetTime(int time) { time_ = time; }
 	void SetStep(int step) { step_ = step; }
 	void SetTargetScore(int score) { target_score_ = score; }
@@ -46,14 +47,15 @@ public:
 	void SwapRowAndCol(EmojiSprite* &start_sprite, EmojiSprite* &end_sprite);
 
 	void Timing(float);
-	void DropEndLabel();
+	void DropEndLabel(float);
 
 	void GameEnd(float);
+	void AwardPulsSprite(float);
 
 	EmojiSprite* spriteOfPoint(Point* point);
 
 	int level_step_ = 10;
-	int level_score_ = 100;
+	int level_score_ = 200;
 
 private:
 	SpriteBatchNode* spriteSheet;
@@ -74,6 +76,11 @@ private:
 	int score_;
 	int target_score_;
 
+	bool game_over;
+
 };
 
 #endif 
+
+
+
