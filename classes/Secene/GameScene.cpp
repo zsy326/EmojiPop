@@ -19,6 +19,7 @@ Game::Game()
     , end_sprite(NULL)
     , score_(0)
     , timing_flag(1)
+    , step_(0)
 {
 }
 
@@ -50,6 +51,10 @@ bool Game::init()
     // init the point of each spriteMatrix
     mapLBX = origin.x+(GAME_SCREEN_WIDTH - SPRITE_SIZE * BOARD_SIZE- (BOARD_SIZE - 1) * EMOJI_GAP)/2;
     mapLBY = origin.y+(GAME_SCREEN_HEIGHT - SPRITE_SIZE * BOARD_SIZE - (BOARD_SIZE - 1) * EMOJI_GAP)/2;
+
+    SetTime(999);
+    SetStep(level_step_);
+    SetTargetScore(level_score_);
 
   //set back button
     auto backItem = MenuItemImage::create(
@@ -102,19 +107,31 @@ bool Game::init()
     this->addChild(menuContinue, 1);
 
     // set timer
-    SetTime(10);
     TTFConfig config("fonts/Marker Felt.ttf", 30);
-    auto label_time = Label::createWithTTF(config, StringUtils::format("Time: %d ", time_));
-    label_time->setPosition(Vec2(origin.x + visibleSize.width / 2.2,
-        origin.y + visibleSize.height /1.05));
+
+    auto label_score = Label::createWithTTF(config, StringUtils::format("Score: %d ", score_));
+    label_score->setPosition(Vec2(origin.x + visibleSize.width / 2,
+        origin.y + visibleSize.height /1.15 ));
+    label_score->setTag(10);
+    this->addChild(label_score);
+
+    auto label_time = Label::createWithTTF(config, StringUtils::format("Left Time: %d ", time_));
+    label_time->setPosition(Vec2(origin.x + visibleSize.width / 1.2,
+        origin.y + visibleSize.height / 15));
     label_time->setTag(11);
     this->addChild(label_time);
 
-    auto label_score = Label::createWithTTF(config, StringUtils::format("Score: %d ", score_));
-    label_score->setPosition(Vec2(origin.x + visibleSize.width / 2.2,
-        origin.y + visibleSize.height / 1.15));
-    label_score->setTag(10);
-    this->addChild(label_score);
+    auto label_step = Label::createWithTTF(config, StringUtils::format("Left Step: %d ", step_));
+    label_step->setPosition(Vec2(origin.x + visibleSize.width / 1.2,
+        origin.y + visibleSize.height / 9));
+    label_step->setTag(12);
+    this->addChild(label_step);
+
+    auto label_target_score = Label::createWithTTF(config, StringUtils::format("Target Score: %d ", target_score_));
+    label_target_score->setPosition(Vec2(origin.x + visibleSize.width / 2,
+        origin.y + visibleSize.height / 1.05));
+    label_target_score->setTag(13);
+    this->addChild(label_target_score);
 
     // set up listener event 
     auto touchListener = EventListenerTouchOneByOne::create();
@@ -127,12 +144,10 @@ bool Game::init()
         userDefault->setIntegerForKey("Int", 0);
     }
 
-    auto labelHScore = Label::createWithTTF(config, "Highest: 0");
-    labelHScore->setPosition(Vec2(GAME_SCREEN_WIDTH - labelHScore->getContentSize().width, GAME_SCREEN_HEIGHT - labelHScore->getContentSize().height));
-    labelHScore->setString(StringUtils::format("Highest: %d ", userDefault->getIntegerForKey("Int")));
-    this->addChild(labelHScore);
-
-    SetTargetScore(100);
+    //auto labelHScore = Label::createWithTTF(config, "Highest: 0");
+    //labelHScore->setPosition(Vec2(GAME_SCREEN_WIDTH - labelHScore->getContentSize().width, GAME_SCREEN_HEIGHT - labelHScore->getContentSize().height));
+    //labelHScore->setString(StringUtils::format("Highest: %d ", userDefault->getIntegerForKey("Int")));
+    //this->addChild(labelHScore);
     BoardInit();
     scheduleUpdate();
     schedule(schedule_selector(Game::Timing), 1.0f);
@@ -171,15 +186,15 @@ void Game::menuContinue(Ref* pSender) {
 bool Game::BoardInit(){
     for (int row = 0; row < BOARD_SIZE; row++) {
         for (int col = 0; col < BOARD_SIZE; col++) {
-            createSprite(row, col);
+            createSprite(row, col,false);
         }
     }
     return true;
 }
 
-void Game::createSprite( int row , int col )	{
+void Game::createSprite( int row , int col , bool isSnow)	{
 	
-	EmojiSprite* emoji = EmojiSprite::create(row, col);
+	EmojiSprite* emoji = EmojiSprite::create(row, col, isSnow);
 
   //calculate the final position of the sprite
     const Point endpoint(mapLBX + (SPRITE_SIZE + EMOJI_GAP) * col + SPRITE_SIZE / 2,
@@ -206,8 +221,14 @@ void Game::createSprite( int row , int col )	{
 // before each level
 void Game::update(float t){
     
-    Label* labelScore = (Label*)this->getChildByTag(10);
-    labelScore->setString(StringUtils::format("Score: %d ", score_));
+    Label* label_score = (Label*)this->getChildByTag(10);
+    label_score->setString(StringUtils::format("Score: %d ", score_));
+
+    Label* label_step = (Label*)this->getChildByTag(12);
+    label_step->setString(StringUtils::format("Left Step: %d ", step_));
+
+    Label* label_target_step = (Label*)this->getChildByTag(13);
+    label_target_step->setString(StringUtils::format("Target Score: %d ", target_score_));
 
     if (isAction) {
         isAction = false;
@@ -247,7 +268,12 @@ void Game::checkAndRemoveSprite()
             if (!current_sprite) {
                 continue;
             }
-            current_sprite->setIgnoreCheck(false);
+            if (current_sprite->getImgIndex() == 5){//if this sprite is snow there is no need to check it
+                current_sprite->setIgnoreCheck(true);
+            }
+            else {
+                current_sprite->setIgnoreCheck(false);
+            }
         }
     }
 
@@ -481,8 +507,10 @@ void Game::removeSprite(){
             //if the sprite will be removed, the blank will be filled
             if (current_sprite->getIsNeedRemove()) {
                 isFillSprite = true;
-             
-                explodeSprite(current_sprite);
+                if (current_sprite->getImgIndex() != 5) {
+                    //current_sprite->getImgIndex() == 5 means it is snow, cannot be removed
+                    explodeSprite(current_sprite);
+                }
             }
         }
     }
@@ -519,7 +547,8 @@ void Game::getColChain(EmojiSprite* current_sprite, std::list< EmojiSprite*>& ch
         EmojiSprite* neighborSprite = map[current_sprite->getRow()][neighborCol];
         if (neighborSprite
             && (neighborSprite->getImgIndex() == current_sprite->getImgIndex())
-            && !neighborSprite->getIsNeedRemove()) {
+            && !neighborSprite->getIsNeedRemove()
+            &&neighborSprite->getImgIndex()!=5) {
             chainList.push_back(neighborSprite);
             neighborCol--;
         }
@@ -532,7 +561,8 @@ void Game::getColChain(EmojiSprite* current_sprite, std::list< EmojiSprite*>& ch
         EmojiSprite* neighborSprite = map[current_sprite->getRow()][neighborCol];
         if (neighborSprite
             && (neighborSprite->getImgIndex() == current_sprite->getImgIndex())
-            && !neighborSprite->getIsNeedRemove()) {
+            && !neighborSprite->getIsNeedRemove()
+            && neighborSprite->getImgIndex() != 5) {
             chainList.push_back(neighborSprite);
             neighborCol++;
         }
@@ -551,7 +581,8 @@ void Game::getRowChain(EmojiSprite* current_sprite, std::list< EmojiSprite*>& ch
         EmojiSprite* neighborSprite = map[neighborRow][current_sprite->getCol()];
         if (neighborSprite
             && (neighborSprite->getImgIndex() == current_sprite->getImgIndex())
-            && !neighborSprite->getIsNeedRemove()) {
+            && !neighborSprite->getIsNeedRemove()
+            && neighborSprite->getImgIndex() != 5) {
             chainList.push_back(neighborSprite);
             neighborRow--;
         }
@@ -563,7 +594,8 @@ void Game::getRowChain(EmojiSprite* current_sprite, std::list< EmojiSprite*>& ch
         EmojiSprite* neighborSprite = map[neighborRow][current_sprite->getCol()];
         if (neighborSprite
             && (neighborSprite->getImgIndex() == current_sprite->getImgIndex())
-            && !neighborSprite->getIsNeedRemove()) {
+            && !neighborSprite->getIsNeedRemove()
+            && neighborSprite->getImgIndex() != 5) {
             chainList.push_back(neighborSprite);
             neighborRow++;
         }
@@ -574,7 +606,6 @@ void Game::getRowChain(EmojiSprite* current_sprite, std::list< EmojiSprite*>& ch
 void Game::fillSprite() {
 
     isAction = true;
-
     int* numEmptyInfo = (int*)malloc(sizeof(int) * BOARD_SIZE);
     memset((void*)numEmptyInfo, 0, sizeof(int) * BOARD_SIZE);
 
@@ -604,7 +635,7 @@ void Game::fillSprite() {
                     float speed = (startPosition.y - endPosition.y) / (GAME_SCREEN_HEIGHT*3);
                     
                     current_sprite->stopAllActions();
-                    current_sprite->runAction(CCMoveTo::create(speed, endPosition));
+                    current_sprite->runAction(MoveTo::create(speed, endPosition));
                     current_sprite->setRow(newRow);
 
                 }
@@ -617,7 +648,13 @@ void Game::fillSprite() {
     // create new sprites and drop them
     for (int c = 0; c < BOARD_SIZE; ++c) {
         for (int r = BOARD_SIZE - numEmptyInfo[c]; r < BOARD_SIZE; ++r) {
-            createSprite(r, c);
+            if (!step_ % 5 == 0) {
+                createSprite(r, c, false);
+            }
+            else
+            {
+                createSprite(r, c, true);
+            }
         }
     }
 
@@ -758,8 +795,7 @@ void Game::SwapSprite() {
     map[end_sprite->getRow()][end_sprite->getCol()] = start_sprite;
     SwapRowAndCol(start_sprite, end_sprite);
 
-    
-    // 检查是否能消除
+    // 妫�鏌ユ槸鍚﹁兘娑堥櫎
     std::list<EmojiSprite*> colChainListOfFirst;
     getColChain(start_sprite, colChainListOfFirst);
 
@@ -780,7 +816,10 @@ void Game::SwapSprite() {
         start_sprite->runAction(MoveTo::create(0.2, position_end));
         end_sprite->runAction(MoveTo::create(0.2, position_start));
 
-        
+        step_--;
+        if (step_ == 0) {
+            DropEndLabel();
+        }
 
         return;
     }
@@ -814,54 +853,60 @@ void Game::SwapRowAndCol(EmojiSprite* &start_sprite,EmojiSprite* &end_sprite) {
 }
 
 void Game::Timing(float wait_time) {
+
+    Label* labelTime = (Label*)this->getChildByTag(11);
+    labelTime->setString(StringUtils::format("Left Time: %d ", time_));
+
     if (timing_flag) {//to check if stop now
         time_--;
     }
-
     //if there is no time left,gameover
-    if (time_ == 0)
-    {
+    if (time_ == 0) {
 
         Label* labelTime = (Label*)this->getChildByTag(11);
         labelTime->setScale(0);
-
-        Point endPosition(GAME_SCREEN_WIDTH / 2, GAME_SCREEN_HEIGHT / 2);
-        Point startPosition(GAME_SCREEN_WIDTH / 2, GAME_SCREEN_HEIGHT);
-
-        if (score_ < target_score_) {
-
-            auto game_over = Sprite::create("LabelGameOver.png");
-            game_over->setPosition(Point(GAME_SCREEN_WIDTH / 2, GAME_SCREEN_HEIGHT / 2.5));
-            this->addChild(game_over);
-
-            //drop GameOver
-            game_over->setPosition(startPosition);
-            game_over->runAction(MoveTo::create(1.0f, endPosition));
-            scheduleOnce(schedule_selector(Game::GameEnd), 3.0f);
-
-        }
-        else {
-
-            auto game_pass = Sprite::create("LabelGamePass.png");
-            game_pass->setPosition(Point(GAME_SCREEN_WIDTH / 2, GAME_SCREEN_HEIGHT / 2.5));
-            this->addChild(game_pass);
-
-            //drop GamePass
-            game_pass->setPosition(startPosition);
-            game_pass->runAction(MoveTo::create(1.0f, endPosition));
-            scheduleOnce(schedule_selector(Game::GameEnd), 3.0f);
-
-        }
-
-        if (time_ > 0) {
-            Label* label_time = (Label*)this->getChildByTag(11);
-            label_time->setString(StringUtils::format("Time: %d ", time_));
-        }
+        DropEndLabel();
+    }
+      
+    if (time_ > 0) {
+        Label* labelTime = (Label*)this->getChildByTag(11);
+        labelTime->setString(StringUtils::format("Left Time: %d ", time_));
     }
 }
 
-void Game::GameEnd(float dt) {
+void Game::DropEndLabel() {
 
+    isAction = false;
+    Point endPosition(GAME_SCREEN_WIDTH / 2, GAME_SCREEN_HEIGHT / 2);
+    Point startPosition(GAME_SCREEN_WIDTH / 2, GAME_SCREEN_HEIGHT);
+
+    if (score_ < target_score_) {
+
+        auto game_over = Sprite::create("LabelGameOver.png");
+        game_over->setPosition(Point(GAME_SCREEN_WIDTH / 2, GAME_SCREEN_HEIGHT / 2.5));
+        this->addChild(game_over);
+
+        //drop GameOver
+        game_over->setPosition(startPosition);
+        game_over->runAction(MoveTo::create(1.0f, endPosition));
+        scheduleOnce(schedule_selector(Game::GameEnd), 3.0f);
+
+    }
+    else {
+
+        auto game_pass = Sprite::create("LabelGamePass.png");
+        game_pass->setPosition(Point(GAME_SCREEN_WIDTH / 2, GAME_SCREEN_HEIGHT / 2.5));
+        this->addChild(game_pass);
+
+        //drop GamePass
+        game_pass->setPosition(startPosition);
+        game_pass->runAction(MoveTo::create(1.0f, endPosition));
+        scheduleOnce(schedule_selector(Game::GameEnd), 3.0f);
+    }
+
+}
+
+void Game::GameEnd(float dt) {
 
     auto scene = Scene::create();
     auto layer = GameEnd::create();
