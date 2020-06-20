@@ -3,7 +3,8 @@
 #include "MainMenuScene.h"
 #include "EmojiSprite.h"
 #include "GameEndScene.h"
-
+#include "cstdlib" 
+#include "ctime"
 #include "Const.h"
 
 USING_NS_CC;
@@ -17,9 +18,8 @@ Game::Game()
     , is_touch_enable(true)
     , start_sprite(NULL)
     , end_sprite(NULL)
-    , score_(0)
     , timing_flag(1)
-    , step_(0)
+    , game_over(false)
 {
 }
 
@@ -33,7 +33,6 @@ static void problemLoading(const char* filename)
     printf("Error while loading: %s\n", filename);
     printf("Depending on how you compiled you might have to add 'Resources/' in front of filenames in HelloWorldScene.cpp\n");
 }
-
 
 bool Game::init()
 {
@@ -52,7 +51,8 @@ bool Game::init()
     mapLBX = origin.x+(GAME_SCREEN_WIDTH - SPRITE_SIZE * BOARD_SIZE- (BOARD_SIZE - 1) * EMOJI_GAP)/2;
     mapLBY = origin.y+(GAME_SCREEN_HEIGHT - SPRITE_SIZE * BOARD_SIZE - (BOARD_SIZE - 1) * EMOJI_GAP)/2;
 
-    SetTime(999);
+    SetScore(0);
+    SetTime(0);
     SetStep(level_step_);
     SetTargetScore(level_score_);
 
@@ -115,7 +115,7 @@ bool Game::init()
     label_score->setTag(10);
     this->addChild(label_score);
 
-    auto label_time = Label::createWithTTF(config, StringUtils::format("Left Time: %d ", time_));
+    auto label_time = Label::createWithTTF(config, StringUtils::format("Passed Time: %d ", time_));
     label_time->setPosition(Vec2(origin.x + visibleSize.width / 1.2,
         origin.y + visibleSize.height / 15));
     label_time->setTag(11);
@@ -140,14 +140,28 @@ bool Game::init()
     _eventDispatcher->addEventListenerWithSceneGraphPriority(touchListener, this);
 
 
-    if (!userDefault->getIntegerForKey("Int")) {
-        userDefault->setIntegerForKey("Int", 0);
+    if (!userDefault->getIntegerForKey("HScore")) {
+        userDefault->setIntegerForKey("HScore", 0);
+    }
+    
+    auto labelHScore = Label::createWithTTF(config, "Highest Score: 0");
+    labelHScore->setPosition(Vec2(origin.x + visibleSize.width / 8,
+        origin.y + visibleSize.height / 9));
+    labelHScore->setString(StringUtils::format("Highest: %d ", userDefault->getIntegerForKey("HScore")));
+    this->addChild(labelHScore);
+
+
+    if (!userDefault->getIntegerForKey("STime")) {
+        userDefault->setIntegerForKey("STime", 0);
     }
 
-    //auto labelHScore = Label::createWithTTF(config, "Highest: 0");
-    //labelHScore->setPosition(Vec2(GAME_SCREEN_WIDTH - labelHScore->getContentSize().width, GAME_SCREEN_HEIGHT - labelHScore->getContentSize().height));
-    //labelHScore->setString(StringUtils::format("Highest: %d ", userDefault->getIntegerForKey("Int")));
-    //this->addChild(labelHScore);
+    auto labelSTime = Label::createWithTTF(config, "Shortest Time: 0");
+    labelSTime->setPosition(Vec2(origin.x + visibleSize.width / 6,
+        origin.y + visibleSize.height / 15));
+    labelSTime->setString(StringUtils::format("Shortest Time: %d ", userDefault->getIntegerForKey("STime")));
+    this->addChild(labelSTime);
+
+
     BoardInit();
     scheduleUpdate();
     schedule(schedule_selector(Game::Timing), 1.0f);
@@ -230,32 +244,49 @@ void Game::update(float t){
     Label* label_target_step = (Label*)this->getChildByTag(13);
     label_target_step->setString(StringUtils::format("Target Score: %d ", target_score_));
 
-    if (isAction) {
-        isAction = false;
-      
-        // check if there are sprites could be removed
-        for (int r = 0; r < BOARD_SIZE; ++r) {
-            for (int c = 0; c < BOARD_SIZE; ++c) {
-                EmojiSprite* current_sprite = map[r][c];
-                if (current_sprite && current_sprite->getNumberOfRunningActions() > 0) {
-                    isAction = true;
-                    break;
+        if (isAction) {
+            isAction = false;
+
+            // check if there are sprites could be removed
+            for (int r = 0; r < BOARD_SIZE; ++r) {
+                for (int c = 0; c < BOARD_SIZE; ++c) {
+                    EmojiSprite* current_sprite = map[r][c];
+                    if (current_sprite && current_sprite->getNumberOfRunningActions() > 0) {
+                        isAction = true;
+                        break;
+                    }
                 }
             }
         }
-    }
 
-    // if not    
-    if (!isAction) {
-        // check if there are blanks
-        if (isFillSprite) {
-            fillSprite();
-            isFillSprite = false;
+        // if not    
+        if (!isAction) {
+            // check if there are blanks
+            if (isFillSprite) {
+                fillSprite();
+                if (score_ > target_score_) {
+                    if (!game_over) {
+                        game_over = true;
+                        scheduleOnce(schedule_selector(Game::AwardPulsSprite), 1.0f);
+
+                        TTFConfig config("fonts/Marker Felt.ttf", 50);
+
+                        auto label_award = Label::createWithTTF(config, 
+                            StringUtils::format("You have got  \n     %d \n special sprites as award\nPlease wait......", step_));
+                        label_award->setPosition(Vec2(GAME_SCREEN_WIDTH / 2,
+                            GAME_SCREEN_HEIGHT / 2));
+                        label_award->setTag(14);
+
+                        this->addChild(label_award);
+
+                    }
+                }
+                isFillSprite = false;
+            }
+            else {
+                checkAndRemoveSprite();
+            }
         }
-        else{
-            checkAndRemoveSprite();
-        }
-    }
 }
 
 void Game::checkAndRemoveSprite()
@@ -410,6 +441,7 @@ void Game::checkAndRemoveSprite()
                     current_sprite->setIgnoreCheck(true);
                     current_sprite->setIsNeedRemove(false);
                     ChangeToPlus(current_sprite);
+
                 }
             }
         }
@@ -438,7 +470,9 @@ void Game::markNeighborSprites(EmojiSprite* current_sprite) {
         for (int c = 0; c < BOARD_SIZE; c++) {
             EmojiSprite* neighbor_sprite = map[row][c];
             markRemove(neighbor_sprite);
-            
+            /*if (neighbor_sprite->GetSpriteSpecies() != NORMAL) {
+                markNeighborSprites(neighbor_sprite);
+            }*/
         }
         score_ += 30;
     }
@@ -446,6 +480,9 @@ void Game::markNeighborSprites(EmojiSprite* current_sprite) {
         for (int r = 0; r < BOARD_SIZE; r++) {
             EmojiSprite* neighbor_sprite = map[r][col];
             markRemove(neighbor_sprite);
+          /*  if (neighbor_sprite->GetSpriteSpecies() != NORMAL) {
+                markNeighborSprites(neighbor_sprite);
+            }*/
             
         }
         score_ += 30;
@@ -456,6 +493,9 @@ void Game::markNeighborSprites(EmojiSprite* current_sprite) {
                 if (r >= 0 && c >= 0 && r <= 7 && c <= 7) {
                     EmojiSprite* neighbor_sprite = map[r][c];
                     markRemove(neighbor_sprite);
+                   /* if (neighbor_sprite->GetSpriteSpecies() != NORMAL) {
+                        markNeighborSprites(neighbor_sprite);
+                    }*/
                 }
             }
         }
@@ -468,10 +508,14 @@ void Game::markNeighborSprites(EmojiSprite* current_sprite) {
                     if (neighbor_sprite->getImgIndex() == current_sprite->getImgIndex()) {
                     score_ += 3;
                     markRemove(neighbor_sprite);
+                   /* if (neighbor_sprite->GetSpriteSpecies() != NORMAL) {
+                        markNeighborSprites(neighbor_sprite);
+                    }*/
                     }
             }
         }
     }
+    return;
 }
 
 void Game::ChangeToPlus(EmojiSprite* current_sprite) {
@@ -493,7 +537,6 @@ void Game::ChangeToPlus(EmojiSprite* current_sprite) {
         break;
     }
     
-
 }
 
 void Game::removeSprite(){
@@ -524,6 +567,7 @@ void Game::explodeSprite(EmojiSprite* current_sprite) {
         ScaleTo::create(0.3f, 0.0),
         CallFuncN::create(CC_CALLBACK_1(Game::actionEndCallback, this)),
         NULL));
+
 }
 
 // to removed sprite, free its map position, remove its node 
@@ -632,7 +676,7 @@ void Game::fillSprite() {
                         mapLBY + (SPRITE_SIZE + EMOJI_GAP) * newRow + SPRITE_SIZE / 2);
                     Point startPosition = current_sprite->getPosition();
                     Point endPosition = endPoint;
-                    float speed = (startPosition.y - endPosition.y) / (GAME_SCREEN_HEIGHT*3);
+                    float speed = (startPosition.y - endPosition.y) / (GAME_SCREEN_HEIGHT*5);
                     
                     current_sprite->stopAllActions();
                     current_sprite->runAction(MoveTo::create(speed, endPosition));
@@ -818,7 +862,7 @@ void Game::SwapSprite() {
 
         step_--;
         if (step_ == 0) {
-            DropEndLabel();
+            scheduleOnce(schedule_selector(Game::DropEndLabel), 3.0f);
         }
 
         return;
@@ -852,31 +896,29 @@ void Game::SwapRowAndCol(EmojiSprite* &start_sprite,EmojiSprite* &end_sprite) {
 
 }
 
-void Game::Timing(float wait_time) {
+void Game::Timing(float stop_time) {
 
-    Label* labelTime = (Label*)this->getChildByTag(11);
-    labelTime->setString(StringUtils::format("Left Time: %d ", time_));
 
     if (timing_flag) {//to check if stop now
-        time_--;
+        time_++;
     }
-    //if there is no time left,gameover
-    if (time_ == 0) {
 
-        Label* labelTime = (Label*)this->getChildByTag(11);
-        labelTime->setScale(0);
-        DropEndLabel();
-    }
-      
+    ////if there is no time left,gameover
+    //if (time_ == 0) {
+
+    //    Label* labelTime = (Label*)this->getChildByTag(11);
+    //    labelTime->setScale(0);
+    //    DropEndLabel();
+    //}
+
     if (time_ > 0) {
         Label* labelTime = (Label*)this->getChildByTag(11);
-        labelTime->setString(StringUtils::format("Left Time: %d ", time_));
+        labelTime->setString(StringUtils::format("Passed Time: %d ", time_));
     }
 }
 
-void Game::DropEndLabel() {
+void Game::DropEndLabel(float stop_time) {
 
-    isAction = false;
     Point endPosition(GAME_SCREEN_WIDTH / 2, GAME_SCREEN_HEIGHT / 2);
     Point startPosition(GAME_SCREEN_WIDTH / 2, GAME_SCREEN_HEIGHT);
 
@@ -889,7 +931,8 @@ void Game::DropEndLabel() {
         //drop GameOver
         game_over->setPosition(startPosition);
         game_over->runAction(MoveTo::create(1.0f, endPosition));
-        scheduleOnce(schedule_selector(Game::GameEnd), 3.0f);
+
+        scheduleOnce(schedule_selector(Game::GameEnd), 1.0f);
 
     }
     else {
@@ -901,25 +944,62 @@ void Game::DropEndLabel() {
         //drop GamePass
         game_pass->setPosition(startPosition);
         game_pass->runAction(MoveTo::create(1.0f, endPosition));
-        scheduleOnce(schedule_selector(Game::GameEnd), 3.0f);
+        scheduleOnce(schedule_selector(Game::GameEnd), 1.0f);
     }
 
 }
 
-void Game::GameEnd(float dt) {
+void Game::GameEnd(float stop_time) {
 
     auto scene = Scene::create();
     auto layer = GameEnd::create();
     
     // pass the score to another function
     layer->setScore(score_);
+    layer->setTime(time_);
+
     if (score_ >= target_score_) {
         layer->changeToPass();
     }
+
     scene->addChild(layer);
 
-    TransitionScene* reScene = TransitionMoveInT::create(1.0f, scene);
+    TransitionScene* reScene = TransitionSlideInL::create(1.0f, scene);
     Director::sharedDirector()->replaceScene(reScene);
 
 }
 
+void Game::AwardPulsSprite(float stop_time){
+  
+    while (step_ > 0) {
+      
+        unsigned seed = time(nullptr);
+        srand(seed);
+        int rand_row = rand() % 8;
+        int rand_col = rand() % 8;
+
+        EmojiSprite* current_sprite = map[rand_row][rand_col];
+        
+        if (current_sprite->GetSpriteSpecies() == NORMAL) {
+            ChangeToPlus(current_sprite);
+            current_sprite->runAction(Sequence::create(
+                ScaleTo::create(0.3f, 2 , 2),
+                Blink::create(0.3f, 5),
+                CallFuncN::create(CC_CALLBACK_1(Game::actionEndCallback, this)),
+                NULL));
+
+            step_--;
+        }
+    }
+
+    for (int r = 0; r < BOARD_SIZE; ++r) {
+        for (int c = 0; c < BOARD_SIZE; ++c) {
+            EmojiSprite* current_sprite = map[r][c];
+            if (current_sprite->GetSpriteSpecies() != NORMAL) {
+                markNeighborSprites(current_sprite);
+            }
+        }
+    }
+
+    scheduleOnce(schedule_selector(Game::DropEndLabel), 3.0f);
+}
