@@ -9,7 +9,8 @@ USING_NS_CC;
 class EmojiSprite : public Sprite
 {
 public:
-    static EmojiSprite* create(int row, int col);
+    static EmojiSprite* create(int row, int col, bool isSnow);
+
 
     void SetSpriteSpecies(SpriteSpecies specie);
     SpriteSpecies GetSpriteSpecies() { return species_; };
