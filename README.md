@@ -16,7 +16,7 @@
 
 - 项目进度时间线：
 
-   ![Gant](http://r.photo.store.qq.com/psc?/V10CyMEv2paJzi/55aGSGZ20hc8Ink30l70cEF3jMCtMCH4qTt5ZTGVee6*.woSnKGW6UUUqvvTFfU9WxQsc8prmZ8Xtxxdq7910BRRNiFcBeQcbvTnpFgcX*Y!/r)
+  ![Gant](http://r.photo.store.qq.com/psc?/V10CyMEv2paJzi/55aGSGZ20hc8Ink30l70cEF3jMCtMCH4qTt5ZTGVee6*.woSnKGW6UUUqvvTFfU9WxQsc8prmZ8Xtxxdq7910BRRNiFcBeQcbvTnpFgcX*Y!/r)
 
 ## 项目开发文档
 
