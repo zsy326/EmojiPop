@@ -9,14 +9,15 @@
 - 项目成员：
 
   - 1953288  张思源  
-- 贡献比例：
+- 贡献比例：  
   -张思源 100%
 
 - 项目Github地址：<https://github.com/zsy326/my_AniPop>
 
 - 项目进度时间线：
 
-  ![timeline]()
+    ![timeline](https://user.qzone.qq.com/857756283/infocenter)
+  
 ## 项目开发文档
 
 - 选用引擎：**Cocos2d-x 3.17.2**
@@ -24,7 +25,6 @@
 - 支持平台：Windows
 
 - 游戏整体架构设计：  
-
 
 - 评分项完成度
 
