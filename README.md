@@ -16,8 +16,8 @@
 
 - 项目进度时间线：
 
-    ![timeline](https://user.qzone.qq.com/857756283/infocenter)
-  
+   ![Gant](http://r.photo.store.qq.com/psc?/V10CyMEv2paJzi/55aGSGZ20hc8Ink30l70cEF3jMCtMCH4qTt5ZTGVee6*.woSnKGW6UUUqvvTFfU9WxQsc8prmZ8Xtxxdq7910BRRNiFcBeQcbvTnpFgcX*Y!/r)
+
 ## 项目开发文档
 
 - 选用引擎：**Cocos2d-x 3.17.2**
