@@ -28,29 +28,31 @@ bool MainMenu::init(){
 
 //turn on the bgm
     SimpleAudioEngine::sharedEngine()->playBackgroundMusic("bgm.mp3", true);
+    float volumn = UserDefault::getInstance()->getFloatForKey("volumn");
+    SimpleAudioEngine::getInstance()->setBackgroundMusicVolume(volumn);
 
 
  //set background
-    auto bg2 = Sprite::create("Background.png");
-    bg2->setPosition(Vec2(origin.x+visible_size.width/2, origin.y + visible_size.height / 2));
-    this->addChild(bg2, 0);
+    auto background = Sprite::create("background/MainMenu.png");
+    background->setPosition(Vec2(origin.x+visible_size.width/2, origin.y + visible_size.height / 2));
+    this->addChild(background, 0);
 
  //set begin button
     auto begin_item = MenuItemImage::create(
-        "BeginNormal.png",
-        "BeginSelected.png",
+        "buttons/BeginNormal.png",
+        "buttons/BeginSelected.png",
         CC_CALLBACK_1(MainMenu::GoToGameScene, this));
 
  //set music button
     auto music_item = MenuItemImage::create(
-        "musicNormal.png",
-        "musicSelected.png",
+        "buttons/musicNormal.png",
+        "buttons/musicSelected.png",
         CC_CALLBACK_1(MainMenu::GoToMusicScene, this));
 
  //set close button
     auto close_item = MenuItemImage::create(
-        "CloseNormal.png",
-        "CloseSelected.png",
+        "buttons/CloseNormal.png",
+        "buttons/CloseSelected.png",
         CC_CALLBACK_1(MainMenu::MenuCloseCallback, this));
 
 //set menu
