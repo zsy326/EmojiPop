@@ -15,10 +15,6 @@
   
 - 项目Github地址：<https://github.com/zsy326/my_AniPop>
 
-- 项目进度时间线：
-
-  ![Gant](http://r.photo.store.qq.com/psc?/V54aNf8J2qH4tD1U6Dqy1p0GVH3g3T8i/TmEUgtj9EK6.7V8ajmQrEOqd6GBLcJHPMAvYQwcTzcR7KwTnpnnIxXrJvvaJLWav8VdH8WxhNeZhBdSNjQ8LWpc1j8oAE15tbkL4AVMCoO8!/r)
-
 
 ## 项目开发文档
 
